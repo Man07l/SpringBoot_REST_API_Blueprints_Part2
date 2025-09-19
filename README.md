@@ -1,24 +1,23 @@
-### Escuela Colombiana de Ingeniería
+# Escuela Colombiana de Ingeniería
 
-### Arquitecturas de Software
+## Arquitecturas de Software
 
+### Integrantes
 
+- **Manuel David Robayo Vega**
+- **William Camilo Hernandez Deaza**
 
-#### API REST para la gestión de planos.
+---
 
-En este ejercicio se va a construír el componente BlueprintsRESTAPI, el cual permita gestionar los planos arquitectónicos de una prestigiosa compañia de diseño. La idea de este API es ofrecer un medio estandarizado e 'independiente de la plataforma' para que las herramientas que se desarrollen a futuro para la compañía puedan gestionar los planos de forma centralizada.
-El siguiente, es el diagrama de componentes que corresponde a las decisiones arquitectónicas planteadas al inicio del proyecto:
+# API REST para la gestión de planos.
 
-![](img/CompDiag.png)
+El BlueprintsRESTAPI será un componente para gestionar planos arquitectónicos de forma centralizada y estándar.
+Su diseño busca bajo acoplamiento, separando el API, la lógica de servicios y la persistencia mediante inyección de dependencias.
+Se implementará con Spring:  
+- Spring Boot para la configuración
+- Spring MVC para los servicios REST,
+- Un esquema de persistencia desacoplado de la lógica del API.
 
-Donde se definió que:
-
-* El componente BlueprintsRESTAPI debe resolver los servicios de su interfaz a través de un componente de servicios, el cual -a su vez- estará asociado con un componente que provea el esquema de persistencia. Es decir, se quiere un bajo acoplamiento entre el API, la implementación de los servicios, y el esquema de persistencia usado por los mismos.
-
-Del anterior diagrama de componentes (de alto nivel), se desprendió el siguiente diseño detallado, cuando se decidió que el API estará implementado usando el esquema de inyección de dependencias de Spring (el cual requiere aplicar el principio de Inversión de Dependencias), la extensión SpringMVC para definir los servicios REST, y SpringBoot para la configurar la aplicación:
-
-
-![](img/ClassDiagram.png)
 
 ### Parte I
 
