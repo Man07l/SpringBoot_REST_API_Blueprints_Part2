@@ -9,123 +9,87 @@
 
 ---
 
-# API REST para la gestión de planos.
+# API REST para la gestión de planos
 
-El BlueprintsRESTAPI será un componente para gestionar planos arquitectónicos de forma centralizada y estándar.
-Su diseño busca bajo acoplamiento, separando el API, la lógica de servicios y la persistencia mediante inyección de dependencias.
-Se implementará con Spring:  
-- Spring Boot para la configuración
-- Spring MVC para los servicios REST,
-- Un esquema de persistencia desacoplado de la lógica del API.
+El **BlueprintsRESTAPI** es un componente desarrollado para la gestión centralizada y estandarizada de planos arquitectónicos. Su diseño sigue principios de bajo acoplamiento, separando el API, la lógica de servicios y la persistencia utilizando la inyección de dependencias. La solución se implementó utilizando el framework Spring, específicamente:
 
+- **Spring Boot** para la configuración y arranque de la aplicación.
+- **Spring MVC** para la exposición de servicios RESTful.
+- Un esquema de persistencia desacoplado de la lógica del API, facilitando la extensibilidad.
 
-### Parte I
+## Estructura y funcionalidades
 
-1. Integre al proyecto base suministrado los Beans desarrollados en el ejercicio anterior. Sólo copie las clases, NO los archivos de configuración. Rectifique que se tenga correctamente configurado el esquema de inyección de dependencias con las anotaciones @Service y @Autowired.
+### Parte I: Configuración básica y servicios GET
 
-2. Modifique el bean de persistecia 'InMemoryBlueprintPersistence' para que por defecto se inicialice con al menos otros tres planos, y con dos asociados a un mismo autor.
+1. **Integración de Beans y configuración de dependencias:**  
+   Se integraron los Beans desarrollados previamente, asegurando el uso correcto de las anotaciones `@Service` y `@Autowired` para la inyección de dependencias.
 
-3. Configure su aplicación para que ofrezca el recurso "/blueprints", de manera que cuando se le haga una petición GET, retorne -en formato jSON- el conjunto de todos los planos. Para esto:
+2. **Inicialización de datos en la capa de persistencia:**  
+   La clase `InMemoryBlueprintPersistence` fue modificada para inicializarse, por defecto, con al menos tres planos, permitiendo que dos de ellos estén asociados al mismo autor.
 
-	* Modifique la clase BlueprintAPIController teniendo en cuenta el siguiente ejemplo de controlador REST hecho con SpringMVC/SpringBoot:
+3. **Exposición del recurso `/blueprints`:**  
+   Se configuró el endpoint `/blueprints` para responder a peticiones GET, retornando en formato JSON el conjunto de todos los planos registrados en el sistema.  
+   **Respuesta esperada:**  
+   ![](/img/media/img1.png)  
+   ![](/img/media/img2.png)
 
-	```java
-	@RestController
-	@RequestMapping(value = "/url-raiz-recurso")
-	public class XXController {
-    
-        
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<?> manejadorGetRecursoXX(){
-        try {
-            //obtener datos que se enviarán a través del API
-            return new ResponseEntity<>(data,HttpStatus.ACCEPTED);
-        } catch (XXException ex) {
-            Logger.getLogger(XXController.class.getName()).log(Level.SEVERE, null, ex);
-            return new ResponseEntity<>("Error bla bla bla",HttpStatus.NOT_FOUND);
-        }        
-	}
+4. **Consulta de planos por autor:**  
+   Se implementó el endpoint `/blueprints/{author}` para retornar todos los planos asociados a un autor específico. Si el autor no existe, se responde con un error HTTP 404.  
+   **Respuesta esperada:**  
+   ![](/img/media/img3.png)  
+   ![](/img/media/img4.png)
 
-	```
-	* Haga que en esta misma clase se inyecte el bean de tipo BlueprintServices (al cual, a su vez, se le inyectarán sus dependencias de persisntecia y de filtrado de puntos).
+5. **Consulta de un plano específico:**  
+   El endpoint `/blueprints/{author}/{bpname}` permite consultar un plano específico de un autor dado. Si el plano o el autor no existen, se responde con HTTP 404.  
+   **Respuesta esperada:**  
+   ![](/img/media/img5.png)  
+   ![](/img/media/img6.png)
 
-4. Verifique el funcionamiento de a aplicación lanzando la aplicación con maven:
+### Parte II: Operaciones POST y PUT
 
-	```bash
-	$ mvn compile
-	$ mvn spring-boot:run
-	
-	```
-	Y luego enviando una petición GET a: http://localhost:8080/blueprints. Rectifique que, como respuesta, se obtenga un objeto jSON con una lista que contenga el detalle de los planos suministados por defecto, y que se haya aplicado el filtrado de puntos correspondiente.
+1. **Creación de nuevos planos (POST):**  
+   El endpoint `/blueprints` acepta peticiones POST para registrar nuevos planos. El cuerpo de la petición debe ser un objeto JSON con la estructura del plano a crear.  
+   **Ejemplo de uso:**
+   ```bash
+   curl -i -X POST -HContent-Type:application/json -HAccept:application/json http://localhost:8080/blueprints -d '{ObjetoJSON}'
+   ```
+   **Respuesta esperada:**  
+   ![](/img/media/img7.png)
 
+2. **Validación de la creación:**  
+   Tras registrar un plano, este puede ser consultado mediante GET a `/blueprints/{author}/{bpname}` para verificar su persistencia.  
+   **Respuesta esperada:**  
+   ![](/img/media/img8.png)
 
-5. Modifique el controlador para que ahora, acepte peticiones GET al recurso /blueprints/{author}, el cual retorne usando una representación jSON todos los planos realizados por el autor cuyo nombre sea {author}. Si no existe dicho autor, se debe responder con el código de error HTTP 404. Para esto, revise en [la documentación de Spring](http://docs.spring.io/spring/docs/current/spring-framework-reference/html/mvc.html), sección 22.3.2, el uso de @PathVariable. De nuevo, verifique que al hacer una petición GET -por ejemplo- a recurso http://localhost:8080/blueprints/juan, se obtenga en formato jSON el conjunto de planos asociados al autor 'juan' (ajuste esto a los nombres de autor usados en el punto 2).
+3. **Actualización de planos (PUT):**  
+   El endpoint `/blueprints/{author}/{bpname}` soporta el método PUT, permitiendo la actualización de un plano existente.
 
-6. Modifique el controlador para que ahora, acepte peticiones GET al recurso /blueprints/{author}/{bpname}, el cual retorne usando una representación jSON sólo UN plano, en este caso el realizado por {author} y cuyo nombre sea {bpname}. De nuevo, si no existe dicho autor, se debe responder con el código de error HTTP 404. 
+### Parte III: Concurrencia y regiones críticas
 
+El componente BlueprintsRESTAPI está diseñado para operar en entornos concurrentes, atendiendo múltiples peticiones simultáneamente. Se identificaron posibles condiciones de carrera principalmente en la clase `InMemoryBlueprintPersistence`, específicamente en los métodos:
 
+- `saveBlueprint()`
+- `updateBlueprint()`
+- Métodos de consulta como `getBlueprint()`, `getBlueprintsByAuthor()`, y `getAllBlueprints()` que acceden al mapa compartido de planos.
 
-### Parte II
+**Regiones críticas:**  
+Las regiones críticas corresponden a los métodos mencionados anteriormente, ya que acceden y modifican el estado compartido del almacenamiento en memoria. Para evitar condiciones de carrera, es fundamental implementar mecanismos de control de concurrencia que no degraden el desempeño, como el uso de colecciones concurrentes o bloqueos finos en lugar de sincronizar métodos completos.
 
-1.  Agregue el manejo de peticiones POST (creación de nuevos planos), de manera que un cliente http pueda registrar una nueva orden haciendo una petición POST al recurso ‘planos’, y enviando como contenido de la petición todo el detalle de dicho recurso a través de un documento jSON. Para esto, tenga en cuenta el siguiente ejemplo, que considera -por consistencia con el protocolo HTTP- el manejo de códigos de estados HTTP (en caso de éxito o error):
+---
 
-	```	java
-	@RequestMapping(method = RequestMethod.POST)	
-	public ResponseEntity<?> manejadorPostRecursoXX(@RequestBody TipoXX o){
-        try {
-            //registrar dato
-            return new ResponseEntity<>(HttpStatus.CREATED);
-        } catch (XXException ex) {
-            Logger.getLogger(XXController.class.getName()).log(Level.SEVERE, null, ex);
-            return new ResponseEntity<>("Error bla bla bla",HttpStatus.FORBIDDEN);            
-        }        
- 	
-	}
-	```	
+## Ejecución
 
+Para correr la aplicación:
 
-2.  Para probar que el recurso ‘planos’ acepta e interpreta
-    correctamente las peticiones POST, use el comando curl de Unix. Este
-    comando tiene como parámetro el tipo de contenido manejado (en este
-    caso jSON), y el ‘cuerpo del mensaje’ que irá con la petición, lo
-    cual en este caso debe ser un documento jSON equivalente a la clase
-    Cliente (donde en lugar de {ObjetoJSON}, se usará un objeto jSON correspondiente a una nueva orden:
+```bash
+$ mvn compile
+$ mvn spring-boot:run
+```
 
-	```	
-	$ curl -i -X POST -HContent-Type:application/json -HAccept:application/json http://URL_del_recurso_ordenes -d '{ObjetoJSON}'
-	```	
+Luego, se pueden realizar las pruebas sobre los endpoints utilizando un navegador web, Postman, o la herramienta `curl` desde la terminal.
 
-	Con lo anterior, registre un nuevo plano (para 'diseñar' un objeto jSON, puede usar [esta herramienta](http://www.jsoneditoronline.org/)):
-	
+---
 
-	Nota: puede basarse en el formato jSON mostrado en el navegador al consultar una orden con el método GET.
+**Nota:**  
+Las imágenes incluidas en este documento corresponden a las respuestas esperadas de la API para cada uno de los requerimientos y deben ser tomadas como referencia para validar el comportamiento de la implementación.
 
-
-3. Teniendo en cuenta el autor y numbre del plano registrado, verifique que el mismo se pueda obtener mediante una petición GET al recurso '/blueprints/{author}/{bpname}' correspondiente.
-
-4. Agregue soporte al verbo PUT para los recursos de la forma '/blueprints/{author}/{bpname}', de manera que sea posible actualizar un plano determinado.
-
-
-### Parte III
-
-El componente BlueprintsRESTAPI funcionará en un entorno concurrente. Es decir, atederá múltiples peticiones simultáneamente (con el stack de aplicaciones usado, dichas peticiones se atenderán por defecto a través múltiples de hilos). Dado lo anterior, debe hacer una revisión de su API (una vez funcione), e identificar:
-
-* Qué condiciones de carrera se podrían presentar?
-* Cuales son las respectivas regiones críticas?
-
-Ajuste el código para suprimir las condiciones de carrera. Tengan en cuenta que simplemente sincronizar el acceso a las operaciones de persistencia/consulta DEGRADARÁ SIGNIFICATIVAMENTE el desempeño de API, por lo cual se deben buscar estrategias alternativas.
-
-Escriba su análisis y la solución aplicada en el archivo ANALISIS_CONCURRENCIA.txt
-
-#### Criterios de evaluación
-
-1. Diseño.
-	* Al controlador REST implementado se le inyectan los servicios implementados en el laboratorio anterior.
-	* Todos los recursos asociados a '/blueprint' están en un mismo Bean.
-	* Los métodos que atienden las peticiones a recursos REST retornan un código HTTP 202 si se procesaron adecuadamente, y el respectivo código de error HTTP si el recurso solicitado NO existe, o si se generó una excepción en el proceso (dicha excepción NO DEBE SER de tipo 'Exception', sino una concreta)	
-2. Funcionalidad.
-	* El API REST ofrece los recursos, y soporta sus respectivos verbos, de acuerdo con lo indicado en el enunciado.
-3. Análisis de concurrencia.
-	* En el código, y en las respuestas del archivo de texto, se tuvo en cuenta:
-		* La colección usada en InMemoryBlueprintPersistence no es Thread-safe (se debió cambiar a una con esta condición).
-		* El método que agrega un nuevo plano está sujeta a una condición de carrera, pues la consulta y posterior agregación (condicionada a la anterior) no se realizan de forma atómica. Si como solución usa un bloque sincronizado, se evalúa como R. Si como solución se usaron los métodos de agregación condicional atómicos (por ejemplo putIfAbsent()) de la colección 'Thread-Safe' usada, se evalúa como B.
