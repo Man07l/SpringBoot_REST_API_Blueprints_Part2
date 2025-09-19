@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PutMapping;
 
 /**
  *
@@ -75,6 +76,27 @@ public class BlueprintAPIController {
             return new ResponseEntity<>("Error al crear el plano",HttpStatus.FORBIDDEN);
         }
 
+    }
+
+    @PutMapping("/{author}/{name}")
+    public ResponseEntity<?> updateBlueprint(
+            @PathVariable("author") String author,
+            @PathVariable("name") String name, 
+            @RequestBody Blueprint blueprint) {
+        try {
+            // Verificar que el autor y nombre en la URL coincidan con los del blueprint
+            if (!blueprint.getAuthor().equals(author) || !blueprint.getName().equals(name)) {
+                return new ResponseEntity<>("La URL y los datos del plano no coinciden", HttpStatus.BAD_REQUEST);
+            }
+
+            // Actualizar los puntos del blueprint
+            blueprintsServices.updatePoints(author, name, blueprint);
+            return new ResponseEntity<>(HttpStatus.OK);
+            
+        } catch (Exception ex) {
+            Logger.getLogger(BlueprintAPIController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity<>("Plano no encontrado: " + author + "/" + name, HttpStatus.NOT_FOUND);
+        }
     }
 
 

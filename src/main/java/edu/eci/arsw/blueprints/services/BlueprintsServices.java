@@ -83,4 +83,17 @@ public class BlueprintsServices {
             throw new BlueprintNotFoundException("Blueprint not found");
         }
     }
+
+    public void updatePoints(String author, String name, Blueprint bp) throws BlueprintPersistenceException, BlueprintNotFoundException {
+        try {
+            Blueprint existingBp = bpp.getBlueprint(author, name);
+
+            existingBp.setPoints(bp.getPoints());
+            bpp.updateBlueprint(existingBp);
+        } catch (BlueprintNotFoundException e) {
+            throw new BlueprintNotFoundException("Blueprint no encontrado: " + author + "/" + name);
+        } catch (Exception e) {
+            throw new BlueprintPersistenceException("Error al actualizar el blueprint: " + e.getMessage());
+        }
+    }
 }
